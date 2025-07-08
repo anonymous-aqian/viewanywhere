@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Production service
+  viewanywhere:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    container_name: viewanywhere-prod
+    networks:
+      - viewanywhere-network
+    environment:
+      - NODE_ENV=production
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development service (optional)
+  viewanywhere-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    container_name: viewanywhere-dev
+    networks:
+      - viewanywhere-network
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev
+
+networks:
+  viewanywhere-network:
+    driver: bridge
+
+# Add volumes if persistent data is needed
+# volumes:
+#   viewanywhere-data:
+#     driver: local
